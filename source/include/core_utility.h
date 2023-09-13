@@ -24,7 +24,7 @@ static uint32_t __calc_address(core_p core, inst_args_p args, uint32_t address, 
 		break;
 		case 3:
 			_CORE_TRACE_("(0x%08x + (D << 3))", address);
-			address += (((int16_t)rGPR(D)) << 3);
+			address += (((int32_t)(int16_t)rGPR(D)) << 3);
 		break;
 		default:
 			_CORE_TRACE_("0x%08x", address);

@@ -28,3 +28,5 @@ libio.a: libio.a(io_buss.o core_trace.o)
 libmemory.a: libmemory.a(memory.o kernel_data.o)
 
 $(TARGET): libcore.a libio.a libmemory.a callback_qlist.o main.o
+
+-include *.d
