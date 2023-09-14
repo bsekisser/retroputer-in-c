@@ -63,76 +63,70 @@ static int _core_atreset(void* param)
 
 /* **** */
 
-static int8_t __core_inst__aluop_db(core_p core, alubox_p alu, unsigned cmd)
+static uint16_t __core_inst__aluop_db(core_p core, alubox_p alu, unsigned cmd)
 {
 	const unsigned d = mlBFMOV(IR, 10, 9, 1) | 1;
 
 	alu->wb_r = d;
 	core_alubox_op_r_src(core, &alu->op1, d, 1);
-	core_alubox_op(&alu->op2, 1, (int8_t)mlBFEXT(IR, 7, 0));
+	core_alubox_op(&alu->op2, 1, mlBFEXT(IR, 7, 0));
 
-	const int8_t result = (int8_t)core_alubox(core, alu, cmd);
-
-	return(result);
+	return(core_alubox(core, alu, cmd));
 }
 
-static int8_t __core_inst__aluop_db_wb(core_p core, alubox_p alu, unsigned cmd)
+static uint16_t __core_inst__aluop_db_wb(core_p core, alubox_p alu, unsigned cmd)
 {
 	const uint16_t result = __core_inst__aluop_db(core, alu, cmd);
 	_gpr(core, alu->wb_r, &result);
 
-	return((int8_t)result);
+	return(result);
 }
 
-static int16_t __core_inst__aluop_ds(core_p core, alubox_p alu, unsigned cmd)
+static uint16_t __core_inst__aluop_ds(core_p core, alubox_p alu, unsigned cmd)
 {
 	const unsigned d = mlBFEXT(IR, 7, 4);
 	const unsigned d_is_byte = d & 1;
-	
+
 	const unsigned s = mlBFEXT(IR, 3, 0);
 	const unsigned s_is_byte = s & 1;
 
 	alu->wb_r = d;
 	core_alubox_op_r_src(core, &alu->op1, d, 2 - d_is_byte);
 	core_alubox_op_r_src(core, &alu->op2, s, 2 - s_is_byte);
-	
-	const int16_t result = (int16_t)core_alubox(core, alu, cmd);
+
+	return(core_alubox(core, alu, cmd));
+}
+
+static uint16_t __core_inst__aluop_ds_wb(core_p core, alubox_p alu, unsigned cmd)
+{
+	const uint16_t result = __core_inst__aluop_ds(core, alu, cmd);
+	_gpr(core, alu->wb_r, &result);
 
 	return(result);
 }
 
-static int16_t __core_inst__aluop_ds_wb(core_p core, alubox_p alu, unsigned cmd)
-{
-	const uint16_t result = (uint16_t)__core_inst__aluop_ds(core, alu, cmd);
-	_gpr(core, alu->wb_r, &result);
-
-	return((int16_t)result);
-}
-
-static int16_t __core_inst__aluop_dw(core_p core, alubox_p alu, unsigned cmd)
+static uint16_t __core_inst__aluop_dw(core_p core, alubox_p alu, unsigned cmd)
 {
 	const unsigned d = mlBFMOV(IR, 18, 17, 1);
 
 	alu->wb_r = d;
 	core_alubox_op_r_src(core, &alu->op1, d, 2);
-	core_alubox_op(&alu->op2, 2, (int16_t)mlBFEXT(IR, 15, 0));
+	core_alubox_op(&alu->op2, 2, mlBFEXT(IR, 15, 0));
 
-	const int16_t result = (int16_t)core_alubox(core, alu, cmd);
+	return(core_alubox(core, alu, cmd));
+}
+
+static uint16_t __core_inst__aluop_dw_wb(core_p core, alubox_p alu, unsigned cmd)
+{
+	const uint16_t result = __core_inst__aluop_dw(core, alu, cmd);
+	_gpr(core, alu->wb_r, &result);
 
 	return(result);
 }
 
-static int16_t __core_inst__aluop_dw_wb(core_p core, alubox_p alu, unsigned cmd)
-{
-	const uint16_t result = (uint16_t)__core_inst__aluop_dw(core, alu, cmd);
-	_gpr(core, alu->wb_r, &result);
-
-	return((int16_t)result);
-}
-
 static uint16_t __core_inst__aluop_rn(core_p core, alubox_p alu, unsigned cmd)
 {
-	const int8_t n = mlBFEXT(IR, 3, 0);
+	const uint8_t n = mlBFEXT(IR, 3, 0);
 	const unsigned r = mlBFEXT(IR, 7, 4);
 	const unsigned is_byte = r & 1;
 
@@ -140,9 +134,7 @@ static uint16_t __core_inst__aluop_rn(core_p core, alubox_p alu, unsigned cmd)
 	core_alubox_op_r_src(core, &alu->op1, r, 2 - is_byte);
 	core_alubox_op(&alu->op2, 1, n);
 
-	const uint16_t result = (int16_t)core_alubox(core, alu, cmd);
-
-	return(result);
+	return(core_alubox(core, alu, cmd));
 }
 
 static uint16_t __core_inst__aluop_rn_wb(core_p core, alubox_p alu, unsigned cmd)
@@ -161,7 +153,7 @@ static int _core_inst_aluop_db(core_p core, unsigned cmd)
 	const uint16_t result = __core_inst__aluop_db_wb(core, &alu, cmd);
 
 	CORE_TRACE_START("%s %s, #0x02x", aluop_name[cmd], reg_name(alu.wb_r), alu.op2.v);
-	CORE_TRACE_END(" /* 0x%08x %s 0x%08x = 0x%08x */", alu.op1.v, aluop_action[cmd], alu.op2.v, result);
+	CORE_TRACE_END(" /* 0x%04x %s 0x%02x = 0x%04x */", alu.op1.v, aluop_action[cmd], alu.op2.v, result);
 
 	return(1);
 }
@@ -172,7 +164,7 @@ static int _core_inst_aluop_ds(core_p core, unsigned cmd)
 	const uint16_t result = __core_inst__aluop_ds_wb(core, &alu, cmd);
 
 	CORE_TRACE_START("%s %s, %s", aluop_name[cmd], reg_name(alu.op1.r), reg_name(alu.op2.r));
-	CORE_TRACE_END(" /* 0x%08x %s 0x%08x = 0x%08x */", alu.op1.v, aluop_action[cmd], alu.op2.v, result);
+	CORE_TRACE_END(" /* 0x%04x %s 0x%04x = 0x%04x */", alu.op1.v, aluop_action[cmd], alu.op2.v, result);
 
 	return(1);
 }
@@ -183,7 +175,7 @@ static int _core_inst_aluop_dw(core_p core, unsigned cmd)
 	const uint16_t result = __core_inst__aluop_dw_wb(core, &alu, cmd);
 
 	CORE_TRACE_START("%s %s, #0x04x", aluop_name[cmd], reg_name(alu.op1.r), alu.op2.v);
-	CORE_TRACE_END(" /* 0x%08x %s 0x%08x = 0x%08x */", alu.op1.v, aluop_action[cmd], alu.op2.v, result);
+	CORE_TRACE_END(" /* 0x%04x %s 0x%04x = 0x%04x */", alu.op1.v, aluop_action[cmd], alu.op2.v, result);
 
 	return(1);
 }
@@ -191,10 +183,10 @@ static int _core_inst_aluop_dw(core_p core, unsigned cmd)
 static int _core_inst_aluop_rn(core_p core, unsigned cmd)
 {
 	alubox_t alu;
-	const int32_t result = __core_inst__aluop_rn_wb(core, &alu, cmd);
+	const uint16_t result = __core_inst__aluop_rn_wb(core, &alu, cmd);
 	
 	CORE_TRACE_START("%s %s, #0x02x", aluop_name[cmd], reg_name(alu.op1.r), alu.op2.v);
-	CORE_TRACE_END(" /* 0x%08x %s 0x%08x = 0x%08x */", alu.op1.v, aluop_action[cmd], alu.op2.v, result);
+	CORE_TRACE_END(" /* 0x%04x %s 0x%02x = 0x%04x */", alu.op1.v, aluop_action[cmd], alu.op2.v, result);
 
 	return(1);
 }
@@ -264,10 +256,10 @@ static int _core_inst_cmp_db(core_p core)
 {
 	alubox_t alu;
 
-	const int8_t result = __core_inst__aluop_db(core, &alu, _alu_sub);
+	const uint8_t result = __core_inst__aluop_db(core, &alu, _alu_sub);
 
 	CORE_TRACE_START("cmp %s, #0x%02x", reg_name(alu.wb_r), alu.op2.v);
-	CORE_TRACE_END(" /* 0x%08x - 0x%08x => 0x%08x */", alu.op1.v, alu.op2.v, result);
+	CORE_TRACE_END(" /* 0x%04x - 0x%02x => 0x%04x */", alu.op1.v, alu.op2.v, result);
 
 	return(1);
 }
@@ -278,7 +270,7 @@ static int _core_inst_cmp_ds(core_p core)
 	const uint16_t result = __core_inst__aluop_ds(core, &alu, _alu_sub);
 
 	CORE_TRACE_START("cmp %s, %s", reg_name(alu.op1.r), reg_name(alu.op2.r));
-	CORE_TRACE_END(" /* 0x%08x - 0x%08x = 0x%08x */", alu.op1.v, alu.op2.v, result);
+	CORE_TRACE_END(" /* 0x%04x - 0x%04x = 0x%04x */", alu.op1.v, alu.op2.v, result);
 
 	return(1);
 }
@@ -290,7 +282,7 @@ static int _core_inst_cmp_dw(core_p core)
 	const int16_t result = __core_inst__aluop_dw(core, &alu, _alu_sub);
 
 	CORE_TRACE_START("cmp %s, #0x%04x", reg_name(alu.wb_r), alu.op2.v);
-	CORE_TRACE_END(" /* 0x%08x - 0x%08x => 0x%08x */", alu.op1.v, alu.op2.v, result);
+	CORE_TRACE_END(" /* 0x%04x - 0x%04x => 0x%04x */", alu.op1.v, alu.op2.v, result);
 
 	return(1);
 }
@@ -302,7 +294,7 @@ static int _core_inst_dec_r(core_p core)
 	alu.wb_r = mlBFEXT(IR, 3, 0);
 	const unsigned is_byte = alu.wb_r & 1;
 
-	const int32_t saved_r = _gpr(core, alu.wb_r, 0);
+	const uint16_t saved_r = _gpr(core, alu.wb_r, 0);
 	
 	core_alubox_op(&alu.op1, 2 - is_byte, saved_r);
 	core_alubox_op(&alu.op2, 2 - is_byte, 1);
@@ -310,7 +302,7 @@ static int _core_inst_dec_r(core_p core)
 	const uint16_t result = core_alubox_wb(core, &alu, _alu_sub);
 
 	CORE_TRACE_START("dec %s", reg_name(alu.wb_r));
-	CORE_TRACE_END(" /* 0x%08x --> 0x%08x */", saved_r, result);
+	CORE_TRACE_END(" /* 0x%04x --> 0x%04x */", saved_r, result);
 
 	return(1);
 }
@@ -351,9 +343,9 @@ static int _core_inst_exc(core_p core)
 		v = (v >> 4) | (v << 4);
 	else
 		v = (v >> 8) | (v << 8);
-	
+
 	v &= mask;
-	
+
 	_gpr(core, r, &v);
 	
 	BMAS(rGPR(FLAGS), _ALU_FLAG_N, !!(v & sign));
@@ -394,8 +386,8 @@ static int _core_inst_in_rp(core_p core)
 	const uint16_t in = io_buss(core->xxx->io_buss, p, 0);
 	_gpr(core, r, &in);
 
-	CORE_TRACE_START("in 0x%04x, %s", p, reg_name(r));
-	CORE_TRACE_END(" /* [0x%08x] --> %08x */", p, in);
+	CORE_TRACE_START("in 0x%02x, %s", p, reg_name(r));
+	CORE_TRACE_END(" /* [0x%02x] --> 0x%04x */", p, in);
 
 	return(1);
 }
@@ -407,7 +399,7 @@ static int _core_inst_inc_r(core_p core)
 	alu.wb_r = mlBFEXT(IR, 3, 0);
 	const unsigned is_byte = alu.wb_r & 1;
 
-	const int16_t saved_r = _gpr(core, alu.wb_r, 0);
+	const uint16_t saved_r = _gpr(core, alu.wb_r, 0);
 
 	core_alubox_op(&alu.op1, 2 - is_byte, saved_r);
 	core_alubox_op(&alu.op2, 2 - is_byte, 1);
@@ -415,7 +407,7 @@ static int _core_inst_inc_r(core_p core)
 	const uint16_t result = core_alubox_wb(core, &alu, _alu_add);
 
 	CORE_TRACE_START("inc %s", reg_name(alu.wb_r));
-	CORE_TRACE_END(" /* 0x%08x --> 0x%08x */", saved_r, result);
+	CORE_TRACE_END(" /* 0x%04x --> 0x%04x */", saved_r, result);
 
 	return(1);
 }
@@ -438,7 +430,7 @@ static int _core_inst_mov_ds(core_p core)
 	_gpr(core, d, &saved_s);
 
 	CORE_TRACE_START("mov %s, %s", reg_name(d), reg_name(s));
-	CORE_TRACE_END(" /* 0x%08x */", saved_s);
+	CORE_TRACE_END(" /* 0x%04x */", saved_s);
 
 	return(1);
 }
@@ -454,17 +446,20 @@ static int _core_inst_ld(core_p core)
 	const unsigned is_byte = arg(d) & 1;
 	
 	CORE_TRACE_START("ld %s, [", reg_name(arg(d)));
-	const int32_t address = __calc_address(core, args, arg(a), 0);
+	const uint32_t address = __calc_address(core, args, arg(a), 0);
 	_CORE_TRACE_("]");
 
 	uint16_t read;
 
-	if(is_byte)
+	if(is_byte) {
 		read = memory_read_byte(core->memory, address);
-	else
+		_CORE_TRACE_(" /* [0x%08x] --> 0x%02x */", address, read);
+	} else {
 		read = memory_read_word(core->memory, address);
+		_CORE_TRACE_(" /* [0x%08x] --> 0x%04x */", address, read);
+	}
 
-	CORE_TRACE_END(" /* [0x%08x] --> 0x%08x */", address, read);
+	CORE_TRACE_END("");
 
 	_gpr(core, arg(d), &read);
 
@@ -483,7 +478,7 @@ static int _core_inst_ld(core_p core)
 static int _core_inst_ld_db(core_p core)
 {
 	const unsigned d = mlBFMOV(IR, 19, 17, 1) | 1;
-	const uint8_t b = mlBFEXT(IR, 7, 0); // ?? int8_t
+	const uint8_t b = mlBFEXT(IR, 7, 0);
 	
 	GPRx(d) = b;
 
@@ -520,7 +515,7 @@ static int _core_inst_neg(core_p core)
 	BMAS(rGPR(FLAGS), _ALU_FLAG_Z, (0 == v));
 	
 	CORE_TRACE_START("exc %s", reg_name(r));
-	CORE_TRACE_END(" /* 0x%08x --> 0x%08x */", saved_v & mask, v);
+	CORE_TRACE_END(" /* 0x%04x --> 0x%04x */", saved_v & mask, v);
 
 	return(1);
 }
@@ -543,7 +538,7 @@ static int _core_inst_not(core_p core)
 	BMAS(rGPR(FLAGS), _ALU_FLAG_Z, (0 == v));
 	
 	CORE_TRACE_START("exc %s", reg_name(r));
-	CORE_TRACE_END(" /* 0x%08x --> 0x%08x */", saved_v & mask, v);
+	CORE_TRACE_END(" /* 0x%04x --> 0x%04x */", saved_v & mask, v);
 
 	return(1);
 }
@@ -566,7 +561,7 @@ static int _core_inst_out_rp(core_p core)
 	io_buss(core->xxx->io_buss, p, &out);
 
 	CORE_TRACE_START("out 0x%04x, %s", p, reg_name(r));
-	CORE_TRACE_END(" /* [0x%08x] <-- %08x */", p, out);
+	CORE_TRACE_END(" /* [0x%02x] <-- 0x%04x */", p, out);
 
 	return(1);
 }
@@ -579,7 +574,7 @@ static unsigned _core_inst_pop__r(core_p core, unsigned r, unsigned is_byte)
 	_gpr(core, r, &data);
 
 	CORE_TRACE_START("pop %s", reg_name(r));
-	CORE_TRACE_END(" /* [SP:(0x%08x)] --> 0x%08x */", saved_sp, data);
+	CORE_TRACE_END(" /* [SP:(0x%04x)] --> 0x%04x */", saved_sp, data);
 
 	return(data);
 }
@@ -632,7 +627,7 @@ static int _core_inst_push__r(core_p core, unsigned r, unsigned is_byte)
 	__push(core, 2 - is_byte, data);
 
 	CORE_TRACE_START("push %s", reg_name(r));
-	CORE_TRACE_END(" /* [SP:(0x%08x)] <-- 0x%08x */", SP, data);
+	CORE_TRACE_END(" /* [SP:(0x%04x)] <-- 0x%04x */", SP, data);
 
 	return(1);
 }
@@ -677,7 +672,7 @@ static int _core_inst_ret(core_p core)
 	const uint16_t new_pc = __pop(core, 2);
 
 	CORE_TRACE_START("ret");
-	CORE_TRACE_END(" /* [SP:(0x%08x)] --> 0x%08x */", saved_sp, new_pc);
+	CORE_TRACE_END(" /* [SP:(0x%04x)] --> 0x%04x */", saved_sp, new_pc);
 
 	PC = new_pc;
 
@@ -695,7 +690,7 @@ static int _core_inst_set_f(core_p core)
 	BSET(rGPR(FLAGS), bit);
 
 	CORE_TRACE_START("set", flag_name(bit));
-	CORE_TRACE_END(" /* 0x%08x --> 0x%08x */", flags_saved, rGPR(FLAGS));
+	CORE_TRACE_END(" /* 0x%04x --> 0x%04x */", flags_saved, rGPR(FLAGS));
 
 	return(1);
 }
@@ -731,12 +726,15 @@ static int _core_inst_st(core_p core)
 
 	const uint16_t write = _gpr(core, arg(s), 0);
 
-	CORE_TRACE_END(" /* [0x%08x] --> 0x%08x */", address, write);
-
-	if(is_byte)
+	if(is_byte) {
+		_CORE_TRACE_(" /* [0x%08x] --> 0x%02x */", address, write);
 		memory_write_byte(core->memory, address, write);
-	else
+	} else {
+		_CORE_TRACE_(" /* [0x%08x] --> 0x%04x */", address, write);
 		memory_write_word(core->memory, address, write);
+	}
+
+	CORE_TRACE_END("");
 
 	if(0) {
 		CORE_TRACE_START("st 0x%08x", arg(a));
@@ -770,7 +768,7 @@ static int _core_inst_swap_ds(core_p core)
 	_gpr(core, s, &saved_d);
 
 	CORE_TRACE_START("swap %s, %s", reg_name(d), reg_name(s));
-	CORE_TRACE_END(" /* 0x%08x <--> 0x%08x */", saved_d, saved_s);
+	CORE_TRACE_END(" /* 0x%04x <--> 0x%04x */", saved_d, saved_s);
 
 	return(1);
 }

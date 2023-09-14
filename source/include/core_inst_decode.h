@@ -36,7 +36,7 @@ typedef struct inst_args_t {
 
 static inst_args_p _core_inst_decode_ldst(core_p core, inst_args_p args)
 {
-	arg(a) = mlBFEXTs(IR, 18, 0);
+	arg(a) = mlBFEXT(IR, 18, 0);
 	arg_flag(i) = BEXT(IR, 21);
 	arg(m) = mlBFEXT(IR, 23, 22);
 	arg_flag(x) = BEXT(IR, 20);

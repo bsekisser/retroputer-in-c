@@ -19,12 +19,12 @@ static uint32_t __calc_address(core_p core, inst_args_p args, uint32_t address, 
 	switch(arg(m)) {
 		case 2:
 			_CORE_TRACE_("((0x%08x + BP) & 0xffff)", address);
-			address += (int16_t)rGPR(BP);
+			address += rGPR(BP);
 			address &= 0xffff;
 		break;
 		case 3:
 			_CORE_TRACE_("(0x%08x + (D << 3))", address);
-			address += (((int32_t)(int16_t)rGPR(D)) << 3);
+			address += rGPR(D) << 3;
 		break;
 		default:
 			_CORE_TRACE_("0x%08x", address);
@@ -33,7 +33,7 @@ static uint32_t __calc_address(core_p core, inst_args_p args, uint32_t address, 
 
 	if(arg_flag(x)) {
 		_CORE_TRACE_(", X");
-		address += (int16_t)rGPR(X);
+		address += rGPR(X);
 	}
 
 	if(arg_flag(i)) {
@@ -43,7 +43,7 @@ static uint32_t __calc_address(core_p core, inst_args_p args, uint32_t address, 
 
 	if(arg_flag(y)) {
 		_CORE_TRACE_(", Y");
-		address += (int16_t)rGPR(Y);
+		address += rGPR(Y);
 	}
 
 	if(trace) core_trace(core, 0, &saved_trace);
