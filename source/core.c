@@ -718,7 +718,7 @@ static int _core_inst_st(core_p core)
 	inst_args_t _args;
 	inst_args_p args = _core_inst_decode_ldst_st(core, &_args);
 	
-	const unsigned is_byte = arg_flag(s) & 1;
+	const unsigned is_byte = arg(s) & 1;
 	
 	CORE_TRACE_START("st [");
 	const unsigned address = __calc_address(core, args, arg(a), 0);
