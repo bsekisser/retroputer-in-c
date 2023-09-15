@@ -58,6 +58,7 @@ dkms.conf
 *.diff
 *.log
 build*/
+main
 Makefile
 Makefile.*
 private/

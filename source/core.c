@@ -386,7 +386,7 @@ static int _core_inst_in_rp(core_p core)
 	const uint16_t in = io_buss(core->xxx->io_buss, p, 0);
 	_gpr(core, r, &in);
 
-	CORE_TRACE_START("in 0x%02x, %s", p, reg_name(r));
+	CORE_TRACE_START("in %s, 0x%02x", reg_name(r), p);
 	CORE_TRACE_END(" /* [0x%02x] --> 0x%04x */", p, in);
 
 	return(1);
@@ -727,7 +727,7 @@ static int _core_inst_st(core_p core)
 	const uint16_t write = _gpr(core, arg(s), 0);
 
 	if(is_byte) {
-		_CORE_TRACE_(" /* [0x%08x] --> 0x%02x */", address, write);
+		_CORE_TRACE_(" /* [0x%08x] --> 0x%02x */", address, write & 0xff);
 		memory_write_byte(core->memory, address, write);
 	} else {
 		_CORE_TRACE_(" /* [0x%08x] --> 0x%04x */", address, write);

@@ -68,18 +68,19 @@ static inline uint32_t _alubox_carry_bit(size_t size)
 
 static inline uint32_t _alubox_carry_bit_value(size_t size)
 {
-	return(_BV(__alubox_shift(size)));
+	return(_BV(_alubox_carry_bit(size)));
 }
 
 static inline uint32_t _alubox_mask(size_t size)
 {
 	return(mlBF(__alubox_shift(size) - 1, 0));
+//	return(_BM(__alubox_shift(size) - 1));
 }
 
-static inline int32_t _alubox_op_v(alubox_op_p op)
+static inline uint32_t _alubox_op_v(alubox_op_p op)
 {
 	const size_t size = op->size;
-	const int32_t v = mlBFEXTs(op->v, __alubox_shift(size), 0);
+	const uint32_t v = mlBFEXT(op->v, __alubox_shift(size), 0);
 
 	if(0) LOG("size: 0x%08zx, v: 0x%08x(0x%08x)", op->size, v, op->v);
 
@@ -91,7 +92,7 @@ static inline uint32_t _alubox_sign_bit(size_t size)
 	return(__alubox_shift(size) - 1);
 }
 
-static inline int32_t core_alubox_op(alubox_op_p op, size_t size, int32_t v)
+static inline uint32_t core_alubox_op(alubox_op_p op, size_t size, uint32_t v)
 {
 	op->size = size;
 	op->v = v;
@@ -102,10 +103,10 @@ static inline int32_t core_alubox_op(alubox_op_p op, size_t size, int32_t v)
 	return(op->v);
 }
 
-static inline int32_t core_alubox_op_r_src(core_p core, alubox_op_p op, unsigned r, size_t size)
+static inline uint32_t core_alubox_op_r_src(core_p core, alubox_op_p op, unsigned r, size_t size)
 {
 	op->r = r;
-	return(core_alubox_op(op, size, (int16_t)_gpr(core, r, 0)));
+	return(core_alubox_op(op, size, _gpr(core, r, 0)));
 }
 
 static uint32_t core_alubox(core_p core, alubox_p alu, unsigned cmd)
@@ -117,8 +118,8 @@ static uint32_t core_alubox(core_p core, alubox_p alu, unsigned cmd)
 
 	const unsigned sizeof_op1 = alu->op1.size;
 
-	int32_t a = 0;
-	if(0) {
+	int16_t a = 0;
+	if(1) {
 		a = alu->op1.v;
 		if(a < 0) a += _alubox_carry_bit_value(sizeof_op1);
 		a &= _alubox_mask(sizeof_op1);
@@ -129,8 +130,8 @@ static uint32_t core_alubox(core_p core, alubox_p alu, unsigned cmd)
 	
 	const unsigned sizeof_op2 = alu->op2.size;
 
-	int32_t b = 0;
-	if(0) {
+	int16_t b = 0;
+	if(1) {
 		b = alu->op2.v;
 		if(b < 0) b += _alubox_carry_bit_value(sizeof_op2);
 		b &= _alubox_mask(sizeof_op2);
@@ -143,7 +144,7 @@ static uint32_t core_alubox(core_p core, alubox_p alu, unsigned cmd)
 	unsigned sign_b = BEXT(b, _alubox_sign_bit(sizeof_op2));
 
 	uint16_t flags = flags_in & ~_ALU_FLAGS_BV_CNVZ;
-	int64_t ret = 0;
+	int32_t ret = 0;
 
 	switch(cmd & 15) {
 		case _alu_add:
@@ -172,10 +173,10 @@ static uint32_t core_alubox(core_p core, alubox_p alu, unsigned cmd)
 						ret = (uint16_t)a % (uint16_t)b;
 					break;
 					case _alu_sdiv:
-						ret = a / b;
+						ret = (int16_t)a / (int16_t)b;
 					break;
 					case _alu_smod:
-						ret = a % b;
+						ret = (int16_t)a % (int16_t)b;
 					break;
 				}
 			}
@@ -196,10 +197,10 @@ static uint32_t core_alubox(core_p core, alubox_p alu, unsigned cmd)
 			ret = a << (b & 0x3f);
 		break;
 		case _alu_shr:
-			ret = a >> (b & 0x3f);
+			ret = ((int16_t)a) >> (b & 0x3f);
 		break;
 		case _alu_smul:
-			ret = a * b;
+			ret = (int16_t)a * (int16_t)b;
 		break;
 		case _alu_sub:
 			ret = a + (-b) + carry_in;
@@ -210,6 +211,9 @@ static uint32_t core_alubox(core_p core, alubox_p alu, unsigned cmd)
 		case _alu_xor:
 			ret = a ^ b;
 		break;
+		default:
+			LOG_ACTION(exit(-1));
+		break;
 	}
 
 	size_t sizeof_ret = (sizeof_op2 < sizeof_op1) ? sizeof_op1 : sizeof_op2;
@@ -217,7 +221,7 @@ static uint32_t core_alubox(core_p core, alubox_p alu, unsigned cmd)
 	if(ret < 0)
 		ret += _alubox_carry_bit_value(sizeof_ret);
 
-	uint32_t result_out = ret & _alubox_mask(sizeof_ret);
+	uint16_t result_out = ret & _alubox_mask(sizeof_ret);
 
 	unsigned nf = BEXT(result_out, _alubox_sign_bit(sizeof_ret));
 	BSET_AS(flags, _ALU_FLAG_N, nf);
@@ -238,7 +242,9 @@ static uint32_t core_alubox(core_p core, alubox_p alu, unsigned cmd)
 	BSET_AS(flags, _ALU_FLAG_Z, 0 == result_out);
 	rGPR(FLAGS) = flags;
 
-	if(0) LOG("flags: 0x%08x, ret = 0x%016" PRIx64 ", result = 0x%08x",
+//	if(0) LOG("flags: 0x%08x, ret = 0x%016" PRIx64 ", result = 0x%08x",
+//		flags, ret, result_out);
+	if(0) LOG("flags: 0x%08x, ret = 0x%08x, result = 0x%08x",
 		flags, ret, result_out);
 
 	return(result_out);

@@ -181,8 +181,10 @@ static uint16_t _gpr(core_p core, unsigned r, const uint16_t* write)
 		LOG_END();
 	}
 
-	if(write)
-		*gpr = data;
+	if(write) {
+		const uint32_t mask = is_byte ? 0xff : 0xffff;
+		*gpr = (*gpr & ~mask) | (data & mask);
+	}
 
 	return(data);
 }
